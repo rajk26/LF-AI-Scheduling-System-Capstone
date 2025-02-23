@@ -159,9 +159,35 @@ def main() -> None:
                     # model.Add(shifts[(n1, d, s)] + shifts[(n2, d, s)] <= 1).only_enforce_if(incompatability[n1][n2] == 1)
 
 
+    
+    # Add constraints to:
+    # ENFORCE MINIMUM LENGTH OF SHIFT (3 30min increments)
 
-    ####### NEED SOME WAY TO ENFORCE MINIMUM LENGTH OF SHIFT (3 30min increments)
+    # Any TA working during 8:00AM-8:30AM must also be working 8:30AM-9:30AM
+    for n in all_TAs:
+        for d in all_days:
+            model.Add(shifts[(n, d, 0)] + shifts[(n, d, 1)] + shifts[(n, d, 2)] == 3).only_enforce_if(shifts[(n, d, 0)])
+    
+    # Any TA starting a shift during a 30min increment from 8:30AM to 9:00PM, must also be working the next 2 subsequent 30min increments
+    for n in all_TAs:
+        for d in all_days:
+            for s in range(1, 26):
+                model.Add(shifts[(n, d, s)] + shifts[(n, d, s + 1)] + shifts[(n, d, s + 2)] == 3).only_enforce_if(shifts[(n, d, s)], ~shifts[(n, d, s - 1)])
+    
+    """
+    # Different implementation of above, keep just in case
+    for n in all_TAs:
+        for d in all_days:
+            for s in range(1, 26):
+                model.Add(shifts[(n, d, s)] + shifts[(n, d, s + 1)] + shifts[(n, d, s + 2)] == 3).only_enforce_if(shifts[(n, d, s)]).only_enforce_if(~shifts[(n, d, s - 1)])
+    """
 
+    # Any TA working during 9:00PM-10:00PM must not be starting their shift during a 30min increment from 9:00PM-10:00PM
+    for n in all_TAs:
+        for d in all_days:
+            for s in range(26, 28):
+                model.Add(shifts[(n, d, s)] == 0).only_enforce_if(~shifts[(n, d, s - 1)])
+    
     print("OK\n")
 
 
