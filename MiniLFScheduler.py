@@ -7,7 +7,6 @@ where a 1 weekday schedule is built for 15 TAs. All input is hard-coded in progr
 PLEASE COMMENT ALL CODE FOR EASY UNDERSTANDING
 
 """
-# from typing import Union
 
 from ortools.sat.python import cp_model
 
@@ -19,69 +18,58 @@ def main() -> None:
     # Change num_days to 60 later (or however many TAs there are)
     num_TAs = 15
     
-    # Number of 30 minute increments in one day (14 hours, 8AM to 10PM)
+    # Number of 30-minute increments per day (14 hours, 8 AM - 10 PM)
     num_30minIncrements = 28
 
-    # Number of work weekdays in a week, change to 4 later
+    # Number of work weekdays in a week, change to 5 later
     num_days = 1
     
     # Ranges for easy looping
     all_TAs = range(num_TAs)
     all_30minIncrements = range(num_30minIncrements)
     all_days = range(num_days)
+    # Peak hours: 8 AM - 6 PM (20 slots), Off-peak: 6 PM - 10 PM (8 slots)
+    peak_slots = range(20)
+    offpeak_slots = range(20, num_30minIncrements)
     
     # TA requests for each 30min increment, 4 means can work, 1(?) means prefers not to, -4(?) means cannot
     # [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
-    shift_requests = [
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    ]
-
+    # shift_requests = [
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    # ]
+    shift_requests = [[[4 for _ in all_30minIncrements] for _ in all_days] for _ in all_TAs]
 
     # Incompatability Matrix: NxN Matrix (where N is TA count)
     # If element is 0, the two respective TAs can work together. If element is 1, the two respective TAs can NOT work together.
-    incompatability = [
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ]
+    incompatibility = [[0] * num_TAs for _ in range(num_TAs)]
+    incompatibility[0][14] = 1  # Example: TA 0 and TA 14 cannot work together
+    incompatibility[14][0] = 1  # Ensure symmetry
 
     # Ensure all TAs are able to work with themselves
     for i in all_TAs:
-        incompatability[i][i] = 0
+        incompatibility[i][i] = 0
             
 
 
     # The maximum amount of time (increments of 30min) each TA can work in a day/week
-    # min_30minIncrements_per_day = 0
-    # max_30minIncrements_per_day = ?
+    min_30minIncrements_per_day = 0
+    max_30minIncrements_per_day = 16
     min_30minIncrements_per_week = 3
-    max_30minIncrements_per_week = 16 # FOR NOW (example with only 1 day in a week), CHANGE max_30minIncrements_per_week TO 20 later 
+    max_30minIncrements_per_week = 16 # FOR NOW (example with only 1 day in a week), CHANGE max_30minIncrements_per_week TO 32 later 
 
 
 
@@ -127,25 +115,33 @@ def main() -> None:
                 shifts[(n, d, s)] = model.new_bool_var(f"shift_n{n}_d{d}_s{s}")
 
     
-    
+    # THE NEW FRIDAY INFO MAKES THE WEEKDAY SCHEDULER A LITTLE MORE COMPLICATED:
+    # SINCE WE CAN'T HAVE A DIFFERENT AMOUNT OF HOURS IN A DAY,
+    # JUST SET "MAX" OF 0 TA's DURING NON-PEAK HOURS FRIDAY,
+    # AND SET ALL DECISION VARIABLES DURING THAT SPAN TO 0 AS WELL
+
     # Add constraints so that:
     # Each 30min increment is assigned to at most 6 TAs during peak hours (8AM to 6PM) and at most 3 TAs during non-peak hours (6PM to 10PM).
     for d in all_days:
-        for s in range(20):
+        for s in peak_slots:
             model.Add(sum(shifts[(n, d, s)] for n in all_TAs) <= 6)
-
-    for d in all_days:
-        for s in range(20, 28):
+        for s in offpeak_slots:
             model.Add(sum(shifts[(n, d, s)] for n in all_TAs) <= 3)
 
 
     # Add constraints so that:
-    # Each TA doesn't work more or less than the specified weekly min/maxes 
-    for n in all_TAs:
-        model.Add(sum(shifts[(n, d, s)] for d in all_days for s in all_30minIncrements) <= max_30minIncrements_per_week)
-
+    # Each TA doesn't work more or less than the specified weekly min/maxes
     for n in all_TAs:
         model.Add(sum(shifts[(n, d, s)] for d in all_days for s in all_30minIncrements) >= min_30minIncrements_per_week)
+        model.Add(sum(shifts[(n, d, s)] for d in all_days for s in all_30minIncrements) <= max_30minIncrements_per_week)
+
+
+    # Add constraints so that:
+    # Each TA doesn't work more or less than the specified weekly min/maxes
+    for n in all_TAs:
+        for d in all_days:
+            model.Add(sum(shifts[(n, d, s)] for s in all_30minIncrements) >= min_30minIncrements_per_day)
+            model.Add(sum(shifts[(n, d, s)] for s in all_30minIncrements) <= max_30minIncrements_per_day)
     
     # Add constraints so that:
     # No 2 TAs can work together if they are marked on the Incompatability Matrix
@@ -153,7 +149,7 @@ def main() -> None:
         for s in all_30minIncrements:
             for n1 in all_TAs:
                 for n2 in all_TAs:
-                    if incompatability[n1][n2] == 1:
+                    if incompatibility[n1][n2] == 1:
                         model.Add(shifts[(n1, d, s)] + shifts[(n2, d, s)] <= 1)
                     # It could also be done like this below, but it would be way slower (honestly just keeping it for reference)
                     # model.Add(shifts[(n1, d, s)] + shifts[(n2, d, s)] <= 1).only_enforce_if(incompatability[n1][n2] == 1)
@@ -173,14 +169,6 @@ def main() -> None:
         for d in all_days:
             for s in range(1, 26):
                 model.Add(shifts[(n, d, s)] + shifts[(n, d, s + 1)] + shifts[(n, d, s + 2)] == 3).only_enforce_if(shifts[(n, d, s)], ~shifts[(n, d, s - 1)])
-    
-    """
-    # Different implementation of above, keep just in case
-    for n in all_TAs:
-        for d in all_days:
-            for s in range(1, 26):
-                model.Add(shifts[(n, d, s)] + shifts[(n, d, s + 1)] + shifts[(n, d, s + 2)] == 3).only_enforce_if(shifts[(n, d, s)]).only_enforce_if(~shifts[(n, d, s - 1)])
-    """
 
     # Any TA working during 9:00PM-10:00PM must not be starting their shift during a 30min increment from 9:00PM-10:00PM
     for n in all_TAs:
@@ -190,6 +178,25 @@ def main() -> None:
     
     print("OK\n")
 
+    # Objective: Maximize TA preferences while ensuring coverage
+    model.Maximize(
+        sum(shifts[(n, d, s)] * shift_requests[n][d][s] for n in all_TAs for d in all_days for s in all_30minIncrements)
+    )
+
+    # Solve model
+    solver = cp_model.CpSolver()
+    status = solver.Solve(model)
+
+    # Display results
+    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
+        print("\nSolution Found: TA Shift Assignments\n")
+        for n in all_TAs:
+            assigned_shifts = [
+                (d, s) for d in all_days for s in all_30minIncrements if solver.Value(shifts[(n, d, s)]) == 1
+            ]
+            print(f"TA {n}: {len(assigned_shifts)} shifts -> {assigned_shifts}")
+    else:
+        print("\nNo feasible solution found. Try relaxing constraints further.")
 
     
 
@@ -210,117 +217,3 @@ This script assigns TAs to shifts while considering:
 - TA incompatibilities
 
 """
-
-# from ortools.sat.python import cp_model
-
-
-# def main() -> None:
-#     # Number of TAs
-#     num_TAs = 15
-
-#     # Number of 30-minute increments per day (14 hours, 8 AM - 10 PM)
-#     num_30minIncrements = 28
-
-#     # Number of work weekdays in a week (for this test, using 1 day)
-#     num_days = 1
-
-#     # Define ranges for looping
-#     all_TAs = range(num_TAs)
-#     all_30minIncrements = range(num_30minIncrements)
-#     all_days = range(num_days)
-
-#     # TA availability & preference matrix (1 = available, 4 = preferred shift, -4 = unavailable)
-#     shift_requests = [
-#         [[4] * num_30minIncrements] * num_TAs
-#     ]  # Simulating all TAs available for all shifts
-
-#     # TA incompatibility matrix (1 = cannot work together, 0 = can work together)
-#     incompatibility = [[0] * num_TAs for _ in range(num_TAs)]
-#     incompatibility[0][14] = 1  # Example: TA 0 and TA 1 cannot work together
-#     incompatibility[14][0] = 1  # Ensure symmetry
-
-#     # Shift constraints
-#     min_shifts_per_week = 3  # Minimum shift duration (1.5 hours = 3 slots)
-#     max_shifts_per_week = 20  # Maximum allowed shifts per week
-
-#     # Peak hours: 8 AM - 6 PM (20 slots), Off-peak: 6 PM - 10 PM (8 slots)
-#     peak_slots = range(20)
-#     offpeak_slots = range(20, num_30minIncrements)
-
-#     # Creates the model
-#     model = cp_model.CpModel()
-
-#     # Decision variables: shift assignment (X[i, j] = 1 if TA i is scheduled at time j)
-#     shifts = {}
-#     for n in all_TAs:
-#         for d in all_days:
-#             for s in all_30minIncrements:
-#                 shifts[(n, d, s)] = model.NewBoolVar(f"shift_n{n}_d{d}_s{s}")
-
-#     # Constraint: Peak hours (8 AM - 6 PM) max 6 TAs, Off-peak (6 PM - 10 PM) max 3 TAs
-#     for d in all_days:
-#         for s in peak_slots:
-#             model.Add(sum(shifts[(n, d, s)] for n in all_TAs) <= 6)
-#         for s in offpeak_slots:
-#             model.Add(sum(shifts[(n, d, s)] for n in all_TAs) <= 3)
-
-#     # Constraint: Each TA must work between min and max shifts per week
-#     for n in all_TAs:
-#         model.Add(sum(shifts[(n, d, s)] for d in all_days for s in all_30minIncrements) >= min_shifts_per_week)
-#         model.Add(sum(shifts[(n, d, s)] for d in all_days for s in all_30minIncrements) <= max_shifts_per_week)
-
-#     # Constraint: TA incompatibility (Ensures incompatible TAs don't work together)
-#     for d in all_days:
-#         for s in all_30minIncrements:
-#             for n1 in all_TAs:
-#                 for n2 in all_TAs:
-#                     if incompatibility[n1][n2] == 1:
-#                         model.Add(shifts[(n1, d, s)] + shifts[(n2, d, s)] <= 1)
-
-#     for n in all_TAs:
-#         for d in all_days:
-#             model.Add(shifts[(n, d, 0)] + shifts[(n, d, 1)] + shifts[(n, d, 2)] == 3).only_enforce_if(shifts[(n, d, 0)])
-    
-#     # Any TA starting a shift during a 30min increment from 8:30AM to 9:00PM, must also be working the next 2 subsequent 30min increments
-#     for n in all_TAs:
-#         for d in all_days:
-#             for s in range(1, 26):
-#                 model.Add(shifts[(n, d, s)] + shifts[(n, d, s + 1)] + shifts[(n, d, s + 2)] == 3).only_enforce_if(shifts[(n, d, s)], ~shifts[(n, d, s - 1)])
-    
-#     """
-#     # Different implementation of above, keep just in case
-#     for n in all_TAs:
-#         for d in all_days:
-#             for s in range(1, 26):
-#                 model.Add(shifts[(n, d, s)] + shifts[(n, d, s + 1)] + shifts[(n, d, s + 2)] == 3).only_enforce_if(shifts[(n, d, s)]).only_enforce_if(~shifts[(n, d, s - 1)])
-#     """
-
-#     # Any TA working during 9:00PM-10:00PM must not be starting their shift during a 30min increment from 9:00PM-10:00PM
-#     for n in all_TAs:
-#         for d in all_days:
-#             for s in range(26, 28):
-#                 model.Add(shifts[(n, d, s)] == 0).only_enforce_if(~shifts[(n, d, s - 1)])
-    
-#     # Objective: Maximize TA preferences while ensuring coverage
-#     model.Maximize(
-#         sum(shifts[(n, d, s)] * shift_requests[d][n][s] for n in all_TAs for d in all_days for s in all_30minIncrements)
-#     )
-
-#     # Solve model
-#     solver = cp_model.CpSolver()
-#     status = solver.Solve(model)
-
-#     # Display results
-#     if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
-#         print("\nSolution Found: TA Shift Assignments\n")
-#         for n in all_TAs:
-#             assigned_shifts = [
-#                 (d, s) for d in all_days for s in all_30minIncrements if solver.Value(shifts[(n, d, s)]) == 1
-#             ]
-#             print(f"TA {n}: {len(assigned_shifts)} shifts -> {assigned_shifts}")
-#     else:
-#         print("\nNo feasible solution found. Try relaxing constraints further.")
-
-
-# if __name__ == "__main__":
-#     main()
