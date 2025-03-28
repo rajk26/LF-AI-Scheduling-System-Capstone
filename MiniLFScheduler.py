@@ -20,7 +20,7 @@ def main() -> None:
     
     # Number of 30-minute increments per day (14 hours, 8 AM - 10 PM)
     num_30minIncrements = 28
-
+    
     # Number of work weekdays in a week, change to 5 later
     num_days = 1
     
@@ -48,30 +48,38 @@ def main() -> None:
 
     # The target number of 30min increments for each TA to work weekly (only including weekdays): 
     # Sponsor wants 20 (10hrs), but that doesn't make sense, should be (total number of 30min increments that need to be worked) / (number of TAs)
+    # 4.5 hours
     target_30minIncrements_per_TA = 9
+    # (20 * 5) + (8 * 3) / 15
+
+
+
+    # The target number of TAs at a time during peak and non-peak hours
+    target_peakTAs = 5
+    target_nonpeakTAs = 3
 
 
     
-    # TA requests for each 30min increment, 4 means can work, 1(?) means prefers not to, -4(?) means cannot
+    # TA requests for each 30min increment, 4 means can work, -1 means prefers not to, -2 means cannot
     # [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
-    # shift_requests = [
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    #     [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
-    # ]
-    shift_requests = [[[4 for _ in all_30minIncrements] for _ in all_days] for _ in all_TAs]
+    shift_requests = [
+        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-1, -1, -1, -1, -1, -1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+        [[-2, -2, -2, -2, -2, -2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]],
+    ]
+    # shift_requests = [[[4 for _ in all_30minIncrements] for _ in all_days] for _ in all_TAs]
 
     # Incompatability Matrix: NxN Matrix (where N is TA count)
     # If element is 0, the two respective TAs can work together. If element is 1, the two respective TAs can NOT work together.
@@ -92,12 +100,12 @@ def main() -> None:
 
 
     # daily targets for number of TAs per 30min increments (from 8AM to 10PM) 
-    # for each day of the week starting on Monday.
+    # for each day of the week.
     # NOT SURE IF THESE ARE NEEDED
-    #weekly_cover_targets = [
-    #    (5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3)  # Monday
+    # weekly_cover_targets = [
+    #    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3
     #    # Note: should be same for all other weekdays
-    #]
+    # ]
 
     # daily maximums for number of TAs per 30min increments (from 8AM to 10PM) 
     # for each day of the week starting on Monday.
@@ -107,16 +115,6 @@ def main() -> None:
     #    # Note: should be same for all other weekdays
     #]
 
-    # Penalties for being under the target or exceeding the maximum coverage constraint per 30 min increment.
-    # WHAT SHOULD THESE BE??? ASK TEAM/STEVE?
-    # ALSO NOT SURE IF THESE ARE NEEDED
-    # under_target_cover_penalties = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    # excess_max_cover_penalties = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
-
-    
-
-
 
 
     # Creates the model.
@@ -124,11 +122,14 @@ def main() -> None:
 
     # Creates decision variables for each TA for 30min increment for each day.
     # shifts[(n, d, s)]: TA 'n' works 30_min_increment 's' on day 'd'.
+    # If TA n cannot work during a time slot (d, s), immediately mark shifts[(n, d, s)] == 0
     shifts = {}
     for n in all_TAs:
         for d in all_days:
             for s in all_30minIncrements:
                 shifts[(n, d, s)] = model.new_bool_var(f"shift_n{n}_d{d}_s{s}")
+                if shift_requests[n][d][s] == -2:
+                    model.Add(shifts[n, d, s] == 0)
 
     
     # THE NEW FRIDAY INFO MAKES THE WEEKDAY SCHEDULER A LITTLE MORE COMPLICATED:
@@ -204,13 +205,59 @@ def main() -> None:
         model.AddAbsEquality(difference_from_target_for_TAs[(n)], sum(shifts[(n, d, s)] for d in all_days for s in all_30minIncrements) - target_30minIncrements_per_TA)
 
 
+    # Create IntVars for objective function to ensure TA coverage at all times. 
+    # We want to minimize, for each 30 min increment for each day:
+    #                                  The maximum of (0, the target number of TAs per 30_min_increment
+    #                                  minus the total number of TAs working during that 30_min_increment)
+    #                                  *Note: Target for peak hours: 5 TAs. Target for non-peak hours: 3 TAs. 
+    #                                  *Note: Max function is to ensure there is no extra bonus if there are more TAs working at a time than the target
+    difference_from_target_for_30minIncrements = {}
+    for d in all_days:
+        for s in peak_slots:
+            difference_from_target_for_30minIncrements[(d, s)] = model.new_int_var(0, target_peakTAs, f"difference_from_target_for_30minIncrement_{d}_{s}")
+            model.AddMaxEquality(difference_from_target_for_30minIncrements[(d, s)], [0, target_peakTAs - (sum(shifts[(n, d, s)] for n in all_TAs))])
+        for s in offpeak_slots:
+            difference_from_target_for_30minIncrements[(d, s)] = model.new_int_var(0, target_nonpeakTAs, f"difference_from_target_for_30minIncrement_{d}_{s}")
+            model.AddMaxEquality(difference_from_target_for_30minIncrements[(d, s)], [0, target_nonpeakTAs - (sum(shifts[(n, d, s)] for n in all_TAs))])
+
+
+
+
+
+
+
     print("OK\n")
 
     # Objective: Maximize TA preferences while ensuring coverage, and ensure shift even-ness
     model.Maximize(
         sum(shifts[(n, d, s)] * shift_requests[n][d][s] for n in all_TAs for d in all_days for s in all_30minIncrements) 
         - sum(difference_from_target_for_TAs[(n)] for n in all_TAs)
+        - (3 * (sum(difference_from_target_for_30minIncrements[(d, s)] for d in all_days for s in all_30minIncrements)))
     )
+        # For "Maximize Coverage" Soft Constraint (third one):
+        # USE WEIGHT OF 3 (needs to be 3 to outweigh someone who doesn't want to work a shift (-1 points plus potential -1 if they are working more than Z) but needs to (3 points))
+
+
+
+
+    # Warning Messages
+    # Print warning if not enough TA coverage for a 30 min increment
+    for d in all_days:
+        for s in peak_slots:
+            c = 0
+            for n in all_TAs:
+                if shift_requests[n][d][s] > -2:
+                    c = c + 1
+            if target_peakTAs > c:
+                print(f"*WARNING* day_30minIncrement {d}_{s} Only has {c} available workers, needs {target_peakTAs}")
+        for s in offpeak_slots:
+            c = 0
+            for n in all_TAs:
+                if shift_requests[n][d][s] > -2:
+                    c = c + 1
+            if target_nonpeakTAs > c:
+                print(f"*WARNING* day_30minIncrement {d}_{s} Only has {c} available workers, needs {target_nonpeakTAs}")
+
 
     # Solve model
     solver = cp_model.CpSolver()
@@ -226,8 +273,31 @@ def main() -> None:
                 (d, s) for d in all_days for s in all_30minIncrements if solver.Value(shifts[(n, d, s)]) == 1
             ]
             print(f"TA {n}: {len(assigned_shifts)} shifts -> {assigned_shifts}")
-            #print(f"difference_from_target_for_TA_{n} = {solver.value(difference_from_target_for_TAs[(n)])}")
-            # USED FOR DUBUGGING print(f"Actual difference from target for TA {n}: {target_30minIncrements_per_TA - sum(solver.Value(shifts[(n, d, s)]) for d in all_days for s in all_30minIncrements)}")
+
+            # USED FOR DUBUGGING 
+            # print(f"difference_from_target_for_TA_{n} = {solver.value(difference_from_target_for_TAs[(n)])}")
+            # print(f"Actual difference from target for TA {n}: {target_30minIncrements_per_TA - sum(solver.Value(shifts[(n, d, s)]) for d in all_days for s in all_30minIncrements)}")
+            # USED FOR DUBUGGING 
+        
+        # Warning Messages
+        # Print warning if any TA is working during a time slot they “don’t want to”
+        for n in all_TAs:
+            for d in all_days:
+                for s in all_30minIncrements:
+                    if solver.Value(shifts[(n, d, s)]) == 1 and shift_requests[n][d][s] == -1:
+                        print(f"*WARNING* TA_day_30minIncrement {n}_{d}_{s} Working when not preferred")
+
+
+        # USED FOR DEBUGGING
+        for d in all_days:
+            for s in peak_slots:
+                print(f"difference_from_target_for_30minIncrements_{d}_{s} = {solver.value(difference_from_target_for_30minIncrements[(d, s)])}")
+                # print(f"Actual difference from target for 30minIncrement {d}_{s}: {target_peakTAs - (sum(solver.Value(shifts[(n, d, s)]) for n in all_TAs))}")
+            for s in offpeak_slots:
+                print(f"difference_from_target_for_30minIncrements_{d}_{s} = {solver.value(difference_from_target_for_30minIncrements[(d, s)])}")
+                # print(f"Actual difference from target for 30minIncrement {d}_{s}: {target_nonpeakTAs - (sum(solver.Value(shifts[(n, d, s)]) for n in all_TAs))}")
+        # USED FOR DEBUGGING
+
     else:
         print("\nNo feasible solution found. Try relaxing constraints further.")
 
