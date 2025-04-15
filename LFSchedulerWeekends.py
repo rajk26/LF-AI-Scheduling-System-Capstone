@@ -41,13 +41,8 @@ def main() -> None:
     WEEKEND_SatSun = range(1, WEEKEND_num_shifts)
 
 
-    # Weekend weekly max for every TA (Work only 1 weekend day every week?)
-    WEEKEND_max_shifts_per_week = 2
-
-
-    # Weekend target number of shifts in a semester
-    WEEKEND_min_shifts_per_TA = 2
-    WEEKEND_max_shifts_per_TA = 3
+    # Weekend target number of shifts in a semester (times 2)
+    WEEKEND_target_shifts_per_TAx2 = 5
 
 
     # The maximum number of TAs at a time during Saturday and Sunday
@@ -403,18 +398,39 @@ def main() -> None:
 
     
 
-    # Add constraints so that:
-    # Each TA doesn't work more than the specified weekly max for Weekends
-    for n in all_TAs:
-        for w in WEEKEND_all_weeks:
-            WEEKENDmodel.Add(sum(WEEKENDshifts[(n, w, s)] for s in WEEKEND_all_shifts) <= WEEKEND_max_shifts_per_week)
+
 
 
     # Add constraints so that:
     # Each TA works either 2 or 3 weekend shifts in a semester
+    # for n in all_TAs:
+    #     WEEKENDmodel.Add(sum(WEEKENDshifts[(n, w, s)] for w in WEEKEND_all_weeks for s in WEEKEND_all_shifts) >= WEEKEND_min_shifts_per_TA)
+    #     WEEKENDmodel.Add(sum(WEEKENDshifts[(n, w, s)] for w in WEEKEND_all_weeks for s in WEEKEND_all_shifts) <= WEEKEND_max_shifts_per_TA)
+
+    WEEKEND_subtraction_from_target_for_TAsx2 = {}
+    WEEKEND_difference_from_target_for_TAsx2 = {}
     for n in all_TAs:
-        WEEKENDmodel.Add(sum(WEEKENDshifts[(n, w, s)] for w in WEEKEND_all_weeks for s in WEEKEND_all_shifts) >= WEEKEND_min_shifts_per_TA)
-        WEEKENDmodel.Add(sum(WEEKENDshifts[(n, w, s)] for w in WEEKEND_all_weeks for s in WEEKEND_all_shifts) <= WEEKEND_max_shifts_per_TA)
+        WEEKEND_subtraction_from_target_for_TAsx2[(n)] = WEEKENDmodel.new_int_var(-1 * WEEKEND_num_weeks * (max_nonpeakTAs + max_SatSunTAs + max_SatSunTAs) * 2, WEEKEND_num_weeks * (max_nonpeakTAs + max_SatSunTAs + max_SatSunTAs) * 2, f"WEEKEND_subtraction_from_target_for_TA_{n}_x2")
+        WEEKEND_difference_from_target_for_TAsx2[(n)] = WEEKENDmodel.new_int_var(0, WEEKEND_num_weeks * (max_nonpeakTAs + max_SatSunTAs + max_SatSunTAs) * 2, f"WEEKEND_difference_from_target_for_TA_{n}_x2")
+        WEEKENDmodel.Add(WEEKEND_subtraction_from_target_for_TAsx2[(n)] == (sum(WEEKENDshifts[(n, w, s)] for w in WEEKEND_all_weeks for s in WEEKEND_all_shifts) * 2) - WEEKEND_target_shifts_per_TAx2)
+        WEEKENDmodel.AddAbsEquality(WEEKEND_difference_from_target_for_TAsx2[(n)], WEEKEND_subtraction_from_target_for_TAsx2[(n)])
+
+    WEEKEND_max_difference_from_target_for_TAsx2 = WEEKENDmodel.new_int_var(0, WEEKEND_num_weeks * (max_nonpeakTAs + max_SatSunTAs + max_SatSunTAs) * 2, f"WEEKEND_max_difference_from_target_for_TAsx2")
+
+    tempArray_for_WEEKEND_difference_from_target_for_TAsx2 = []
+    for n in all_TAs:
+        tempArray_for_WEEKEND_difference_from_target_for_TAsx2.append(WEEKEND_difference_from_target_for_TAsx2[(n)])
+
+    WEEKENDmodel.AddMaxEquality(WEEKEND_max_difference_from_target_for_TAsx2, tempArray_for_WEEKEND_difference_from_target_for_TAsx2)
+
+
+    WEEKEND_max_difference_from_target_for_TAs = WEEKENDmodel.new_int_var(0, WEEKEND_num_weeks * (max_nonpeakTAs + max_SatSunTAs + max_SatSunTAs), f"WEEKEND_max_difference_from_target_for_TAs")
+    WEEKENDmodel.AddDivisionEquality(WEEKEND_max_difference_from_target_for_TAs, WEEKEND_max_difference_from_target_for_TAsx2, 2)
+
+
+
+
+
 
 
 
@@ -432,7 +448,8 @@ def main() -> None:
 
     # Objective: Maximize TA preferences while ensuring coverage, and ensure weekend shift even-ness
     WEEKENDmodel.Maximize(
-        sum(WEEKENDshifts[(n, w, s)] * WEEKEND_shift_requests[n][w][s] for n in all_TAs for w in WEEKEND_all_weeks for s in WEEKEND_all_shifts) 
+        sum(WEEKENDshifts[(n, w, s)] * WEEKEND_shift_requests[n][w][s] for n in all_TAs for w in WEEKEND_all_weeks for s in WEEKEND_all_shifts)
+        - (num_TAs * WEEKEND_max_difference_from_target_for_TAs)  
     )
 
     # Solve model
@@ -454,6 +471,15 @@ def main() -> None:
         for w in WEEKEND_all_weeks:
             for s in WEEKEND_all_shifts:
                 print(f"Week {w} shift {s}: {sum(WEEKENDsolver.Value(WEEKENDshifts[(n, w, s)]) for n in all_TAs)}")
+
+        for n in all_TAs:
+            print(f"WEEKEND_subtraction_from_target_for_TAsx2[({n})] = {WEEKENDsolver.Value(WEEKEND_subtraction_from_target_for_TAsx2[(n)])}")
+
+        for n in all_TAs:
+            print(f"WEEKEND_difference_from_target_for_TAsx2[({n})] = {WEEKENDsolver.Value(WEEKEND_difference_from_target_for_TAsx2[(n)])}")
+
+        print(f"WEEKEND_max_difference_from_target_for_TAsx2 = {WEEKENDsolver.Value(WEEKEND_max_difference_from_target_for_TAsx2)}")
+        print(f"WEEKEND_max_difference_from_target_for_TAs = {WEEKENDsolver.Value(WEEKEND_max_difference_from_target_for_TAs)}")
 
     else:
         print("\nNo feasible solution found for weekend. Try relaxing constraints further.")
