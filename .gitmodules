@@ -1,0 +1,3 @@
+[submodule "Capstone-LF-Scheduling-Tool"]
+	path = Capstone-LF-Scheduling-Tool
+	url = https://github.com/zem68/Capstone-LF-Scheduling-Tool.git
