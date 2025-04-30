@@ -1,6 +1,6 @@
 # streamlit_app.py
 import streamlit as st
-import pandas as pd
+import pandas as pd 
 from ortools.sat.python import cp_model
 import time
 
@@ -104,9 +104,17 @@ def main():
                 # Save last uploaded dataframe
                 st.session_state['last_df'] = df
 
-                # Create TA label list like "TA 1", "TA 2", ...
-                ta_labels = [f"TA {i+1}" for i in range(len(df))]
+                # Create TA label list based on actual names
+                if "Date / Time" in df.columns:
+                    ta_labels = list(df.columns[1:])  # skip the "Date / Time" column
+                elif "Date" in df.columns:
+                    ta_labels = list(df.columns[1:])  # skip the "Date" column
+                else:
+                    st.error("❌ Could not detect proper columns to create TA labels.")
+                    return
+
                 st.session_state['ta_labels'] = ta_labels
+
 
 
             except Exception as e:
@@ -262,8 +270,9 @@ def main():
                         shift_requests, all_TAs, all_days, all_30minIncrements,
                         incompat, custom_hour_goals=custom_hours,
                         peak_required=peak_target, nonpeak_required=nonpeak_target,
-                        peak_slots=peak_slots
+                        peak_slots=peak_slots, ta_labels=ta_labels
                     )
+
 
 
                 elif file_type == "weekend":
@@ -354,8 +363,7 @@ def main():
                                 )
 
                             # Sort TAs by number (e.g., TA 1, TA 2, ..., TA 10) so the display is ordered
-                            grouped["TA_num"] = grouped["TA"].str.extract(r'TA (\d+)').astype(int)
-                            grouped = grouped.sort_values("TA_num").drop(columns="TA_num").reset_index(drop=True)
+                            grouped = grouped.sort_values("TA").reset_index(drop=True)
 
 
                             st.dataframe(grouped, use_container_width=True, height=500)
@@ -559,7 +567,9 @@ def parse_weekend_availability_schej(df):
 #Solver
 def run_solver(shift_requests, all_TAs, all_days, all_30minIncrements,
                incompatible_TA_pairs=[], custom_hour_goals={},
-               peak_required=5, nonpeak_required=3, peak_slots=None):
+               peak_required=5, nonpeak_required=3, peak_slots=None,
+               ta_labels=None):
+
 
     num_TAs = len(all_TAs)
     mon_thu = [0, 1, 2, 3]
@@ -728,7 +738,7 @@ def run_solver(shift_requests, all_TAs, all_days, all_30minIncrements,
                     status = preference_map.get((n, d, s), -2)
                     label = " (If Needed)" if status == 2 else ""  # Only mark if it's "If Needed"
                     output.append({
-                        "TA": f"TA {n+1}",
+                        "TA": ta_labels[n],
                         "Day": days[d],
                         "Time Slot": f"{time_slots[s]}{label}"
                     })
